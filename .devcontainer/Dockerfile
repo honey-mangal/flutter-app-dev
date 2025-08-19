@@ -1,6 +1,6 @@
-FROM mcr.microsoft.com/devcontainers/dart:stable
+FROM debian:trixie
 
-# Install dependencies (including native build tools and Chromium for Flutter web)
+# Install dependencies (including native build tools, Chromium for Flutter web, and Docker)
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
@@ -9,23 +9,18 @@ RUN apt-get update && apt-get install -y \
     clang \
     cmake \
     make \
+    openjdk-21-jdk \
+    git \
+    tar \
+    xz-utils \
     pkg-config \
     libgtk-3-dev \
     liblzma-dev \
     ninja-build \
     libstdc++6 \
-    chromium \
+    ca-certificates \
+    lsb-release \
     && rm -rf /var/lib/apt/lists/*
-
-# Install OpenJDK 22
-RUN mkdir -p /usr/share/man/man1 \
-    && wget https://download.java.net/java/GA/jdk22/latest/binaries/openjdk-22_linux-x64_bin.tar.gz \
-    && tar -xzf openjdk-22_linux-x64_bin.tar.gz -C /opt \
-    && rm openjdk-22_linux-x64_bin.tar.gz \
-    && ln -s /opt/jdk-22 /opt/java
-
-ENV JAVA_HOME=/opt/java
-ENV PATH="$JAVA_HOME/bin:${PATH}"
 
 # Install Android SDK command line tools (latest version 13114758)
 ENV ANDROID_SDK_ROOT=/usr/local/android-sdk
@@ -36,10 +31,12 @@ RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools \
     && rm commandlinetools.zip
 
 # Install Flutter
-RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter -b stable \
-    && /usr/local/flutter/bin/flutter doctor
+RUN mkdir -p /usr/local/development \
+    && curl -fo flutter.tar.xz  https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.1-stable.tar.xz \
+    && tar -xf flutter.tar.xz -C /usr/local/development \
+    && rm flutter.tar.xz \
 
-ENV PATH="/usr/local/flutter/bin:/usr/local/android-sdk/cmdline-tools/latest/bin:/usr/local/android-sdk/platform-tools:${PATH}"
+ENV PATH="/usr/local/development/flutter/bin:/usr/local/android-sdk/cmdline-tools/latest/bin:/usr/local/android-sdk/platform-tools:${PATH}"
 
 # Accept Android licenses and install common packages (no emulator/system-images)
 RUN yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses

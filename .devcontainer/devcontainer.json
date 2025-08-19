@@ -3,14 +3,16 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dart-code.flutter"
+      ],
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      }
+    }
   },
   "postCreateCommand": "flutter doctor --android-licenses && flutter doctor",
-  "extensions": [
-    "Dart-Code.flutter",
-    "ms-vscode.cpptools",
-    "ms-androidtools.vscode-android-emulator"
-  ],
   "remoteUser": "vscode"
 }
