@@ -1,25 +1,14 @@
 FROM debian:trixie
 
 # Install dependencies (including native build tools, Chromium for Flutter web, and Docker)
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade && apt-get install -y \
     curl \
     unzip \
-    gnupg2 \
-    wget \
-    clang \
-    cmake \
-    make \
+    zip \
     openjdk-21-jdk \
     git \
-    tar \
     xz-utils \
-    pkg-config \
-    libgtk-3-dev \
-    liblzma-dev \
-    ninja-build \
-    libstdc++6 \
-    ca-certificates \
-    lsb-release \
+    libglu1-mesa \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Android SDK command line tools (latest version 13114758)
