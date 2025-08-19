@@ -1,0 +1,56 @@
+FROM mcr.microsoft.com/devcontainers/dart:stable
+
+# Install dependencies (including native build tools and Chromium for Flutter web)
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    gnupg2 \
+    wget \
+    clang \
+    cmake \
+    make \
+    pkg-config \
+    libgtk-3-dev \
+    liblzma-dev \
+    ninja-build \
+    libstdc++6 \
+    chromium \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install OpenJDK 22
+RUN mkdir -p /usr/share/man/man1 \
+    && wget https://download.java.net/java/GA/jdk22/latest/binaries/openjdk-22_linux-x64_bin.tar.gz \
+    && tar -xzf openjdk-22_linux-x64_bin.tar.gz -C /opt \
+    && rm openjdk-22_linux-x64_bin.tar.gz \
+    && ln -s /opt/jdk-22 /opt/java
+
+ENV JAVA_HOME=/opt/java
+ENV PATH="$JAVA_HOME/bin:${PATH}"
+
+# Install Android SDK command line tools (latest version 13114758)
+ENV ANDROID_SDK_ROOT=/usr/local/android-sdk
+RUN mkdir -p $ANDROID_SDK_ROOT/cmdline-tools \
+    && curl -fo commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip \
+    && unzip commandlinetools.zip -d $ANDROID_SDK_ROOT/cmdline-tools \
+    && mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest \
+    && rm commandlinetools.zip
+
+# Install Flutter
+RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter -b stable \
+    && /usr/local/flutter/bin/flutter doctor
+
+ENV PATH="/usr/local/flutter/bin:/usr/local/android-sdk/cmdline-tools/latest/bin:/usr/local/android-sdk/platform-tools:${PATH}"
+
+# Accept Android licenses and install common packages (no emulator/system-images)
+RUN yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+RUN $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
+    "platform-tools" \
+    "platforms;android-34" \
+    "build-tools;34.0.0"
+
+# --- Tailscale install ---
+RUN curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null \
+    && curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list \
+    && apt-get update \
+    && apt-get install -y tailscale \
+    && rm -rf /var/lib/apt/lists/*
